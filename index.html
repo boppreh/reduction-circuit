@@ -1,0 +1,223 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width" />
+        <title>Circuit</title>
+        <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font: 16px sans-serif;
+            color: #CCC;
+        }
+        canvas {
+            background-color: #EEE;
+            background-color: #456990;
+        }
+        </style>
+    </head>
+    <body>
+        <canvas></canvas>
+        <script>
+"use strict";
+
+var canvas = document.getElementsByTagName("canvas")[0];
+var context = canvas.getContext("2d");
+context.strokeStyle = "black";
+context.strokeWidth = 1;
+context.save();
+
+var hash = window.location.hash;
+var f;
+if (hash) {
+    f = window.location.hash.slice(1).split(',').map(Number);
+} else {
+    f = [7, 6, 2, 1, 0];
+}
+var r = f.slice(1);
+var m = f[0];
+var d = 2*m - 2;
+
+var padding = 40;
+var startY = padding;
+var xorRadius = 10;
+var xorPadding = 10;
+
+function heightY(height) {
+    return startY + (xorPadding + 2 * xorRadius) * (height + 1);
+}
+function columnWidth() {
+    return (canvas.width - 2 * padding) / d;
+}
+function columnX(col) {
+    return padding + (1 - col / d) * (canvas.width - 2 * padding);
+}
+function xColumn(x) {
+    var ratio = (x - padding) / (canvas.width - 2 * padding);
+    return Math.round((1 - ratio) * (d));
+}
+
+function drawXor(x, y) {
+    context.arc(x, y, xorRadius, 0, Math.PI * 2);
+    context.moveTo(x-xorRadius, y);
+    context.lineTo(x+xorRadius, y);
+    context.moveTo(x, y-xorRadius);
+    context.lineTo(x, y+xorRadius);
+}
+
+function drawNumbers() {
+    context.textAlign = "center";
+    context.font = "26px mono";
+    for (var i = 0; i <= d; i++) {
+        context.fillText(i, columnX(i), padding * 3/4, columnWidth());
+    }
+}
+
+function drawLines() {
+    context.beginPath();
+
+    var height = 0;
+    var i = d;
+    for (; i >= m; i--) {
+        var right = i;
+
+        for (var j = 0; j < r.length; j++) {
+            var left = right - m + r[j];
+
+            var y = heightY(height++);
+
+            context.moveTo(columnX(right), y);
+            context.lineTo(columnX(left), y);
+            drawXor(columnX(left), y);
+        }
+
+        context.moveTo(columnX(right), startY);
+        context.lineTo(columnX(right), heightY(height-1));
+    }
+    for (; i >= 0; i--) {
+        context.moveTo(columnX(i), startY);
+        context.lineTo(columnX(i), canvas.height);
+    }
+    context.stroke();
+}
+
+function computeXorStructure() {
+    var xorsPerColumn = [];
+    for (var i = 0; i <= d; i++) {
+        xorsPerColumn[i] = [];
+    }
+    var height = 0;
+    for (var i = d; i >= m; i--) {
+        var right = i;
+        for (var j = 0; j < r.length; j++) {
+            var left = right - m + r[j];
+            var rightXors = xorsPerColumn[right];
+            var lastRightXor = rightXors[rightXors.length-1];
+            var leftXors = xorsPerColumn[left];
+            var lastLeftXor = leftXors[leftXors.length-1];
+            var lastLeftDelay = lastLeftXor && lastLeftXor.delay || 0;
+            var lastRightDelay = lastRightXor && lastRightXor.delay || 0;
+            var delay = Math.max(lastLeftDelay, lastRightDelay) + 1;
+            xorsPerColumn[left].push({"height": height++, "column": left, "leftXor": lastLeftXor, "rightXor": lastRightXor, "delay": delay});
+        }
+    }
+    return xorsPerColumn;
+}
+
+function computeCriticalPath(column) {
+    var xorsPerColumn = computeXorStructure();
+    var xors = xorsPerColumn[column];
+    var xor = xors[xors.length-1];
+    var criticalPath = [];
+    while (xor) {
+        criticalPath.push(xor);
+        if (xor.rightXor === undefined) {
+            xor = xor.leftXor;
+        } else if (xor.leftXor === undefined) {
+            xor = xor.rightXor;
+        } else if (xor.rightXor.delay >= xor.leftXor.delay) {
+            xor = xor.rightXor;
+        } else {
+            xor = xor.leftXor;
+        }
+    }
+    return criticalPath;
+}
+
+function drawCriticalPath(column) {
+    context.save();
+    context.strokeStyle = "#502010";
+    context.lineWidth = 3;
+    context.beginPath();
+    var criticalPath = computeCriticalPath(column);
+    var lastColumn = column;
+    var lastY = startY;
+    if (column < m) {
+        context.moveTo(columnX(lastColumn), canvas.height);
+    } else {
+        context.moveTo(columnX(lastColumn), heightY(r.length * (d-column+1) - 1));
+    }
+    for (var i = 0; i < criticalPath.length; i++) {
+        var xor = criticalPath[i];
+        var y = startY + (xorPadding + 2 * xorRadius) * (xor.height + 1);
+        if (lastColumn != xor.column) {
+            context.lineTo(columnX(xor.column), lastY);
+        }
+        context.lineTo(columnX(xor.column), y);
+        lastColumn = xor.column;
+        lastY = y;
+    }
+    context.lineTo(columnX(xor && xor.column || column), startY);
+    context.stroke();
+    context.restore();
+}
+
+function redrawEverything() {
+    context.save();
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    drawNumbers();
+    drawLines();
+    context.restore();
+}
+
+function debounce(fn, timeout) {
+    var id;
+    return function(e) {
+        if (id) {
+            clearTimeout(id);
+        }
+        id = setTimeout(function() { fn(e) }, timeout);
+    }
+}
+
+redrawEverything();
+window.addEventListener("resize", debounce(redrawEverything, 100));
+window.addEventListener("mousemove", debounce(function(event) {   
+    var column = xColumn(event.clientX);
+    if (column < 0 || column > d) {
+        var xorStructure = computeXorStructure();
+        var maxDelay = -1;
+        var maxDelayColumn = -1;
+        for (var i = 0; i < xorStructure.length; i++) {
+            var xors = xorStructure[i];
+            var last = xors[xors.length - 1];
+            if (last.delay >= maxDelay) {
+                maxDelay = last.delay;
+                maxDelayColumn = last.column;
+            }
+        }
+        column = maxDelayColumn;
+    }
+    redrawEverything();
+    drawCriticalPath(column);
+}, 100));
+
+        </script>
+    </body>
+</html>
