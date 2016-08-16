@@ -119,8 +119,8 @@ function computeXorStructure() {
             var lastRightXor = rightXors[rightXors.length-1];
             var leftXors = xorsPerColumn[left];
             var lastLeftXor = leftXors[leftXors.length-1];
-            var lastLeftDelay = lastLeftXor && lastLeftXor.delay || 0;
-            var lastRightDelay = lastRightXor && lastRightXor.delay || 0;
+            var lastLeftDelay = lastLeftXor ? lastLeftXor.delay : 0;
+            var lastRightDelay = lastRightXor ? lastRightXor.delay : 0;
             var delay = Math.max(lastLeftDelay, lastRightDelay) + 1;
             xorsPerColumn[left].push({"height": height++, "column": left, "leftXor": lastLeftXor, "rightXor": lastRightXor, "delay": delay});
         }
@@ -163,7 +163,7 @@ function drawCriticalPath(column) {
     }
     for (var i = 0; i < criticalPath.length; i++) {
         var xor = criticalPath[i];
-        var y = startY + (xorPadding + 2 * xorRadius) * (xor.height + 1);
+        var y = heightY(xor.height);
         if (lastColumn != xor.column) {
             context.lineTo(columnX(xor.column), lastY);
         }
@@ -171,8 +171,22 @@ function drawCriticalPath(column) {
         lastColumn = xor.column;
         lastY = y;
     }
-    context.lineTo(columnX(xor && xor.column || column), startY);
+    context.lineTo(columnX(xor ? xor.column : column), startY);
     context.stroke();
+    context.restore();
+}
+function drawDelays() {
+    context.save();
+    context.textAlign = "left";
+    context.font = "18px mono";
+    context.fillStyle = "#502010";
+    var xorsPerColumn = computeXorStructure();
+    for (var i = 0; i <= d; i++) {
+        var xors = xorsPerColumn[i];
+        var last = xors[xors.length - 1];
+        var delay = last ? last.delay : 0;
+        context.fillText(delay, columnX(i), canvas.height - padding + 18);
+    }
     context.restore();
 }
 
@@ -181,8 +195,11 @@ function redrawEverything() {
     context.clearRect(0, 0, canvas.width, canvas.height);
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    xorRadius = canvas.height / (d * f.length) / 2;
+    xorPadding = xorRadius;
     drawNumbers();
     drawLines();
+    drawDelays();
     context.restore();
 }
 
