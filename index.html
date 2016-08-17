@@ -156,11 +156,7 @@ function drawCriticalPath(column) {
     var criticalPath = computeCriticalPath(column);
     var lastColumn = column;
     var lastY = startY;
-    if (column < m) {
-        context.moveTo(columnX(lastColumn), canvas.height);
-    } else {
-        context.moveTo(columnX(lastColumn), heightY(r.length * (d-column+1) - 1));
-    }
+    context.moveTo(columnX(lastColumn), canvas.height);
     for (var i = 0; i < criticalPath.length; i++) {
         var xor = criticalPath[i];
         var y = heightY(xor.height);
