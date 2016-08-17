@@ -77,7 +77,7 @@ function drawNumbers() {
     }
 }
 
-function drawLines() {
+function drawLines(xorsPerColumn) {
     context.beginPath();
 
     var height = 0;
@@ -175,12 +175,11 @@ function drawCriticalPath(column) {
     context.stroke();
     context.restore();
 }
-function drawDelays() {
+function drawDelays(xorsPerColumn) {
     context.save();
     context.textAlign = "left";
     context.font = "18px mono";
     context.fillStyle = "#502010";
-    var xorsPerColumn = computeXorStructure();
     for (var i = 0; i <= d; i++) {
         var xors = xorsPerColumn[i];
         var last = xors[xors.length - 1];
@@ -197,9 +196,10 @@ function redrawEverything() {
     canvas.height = window.innerHeight;
     xorRadius = canvas.height / (d * f.length) / 2;
     xorPadding = xorRadius;
+    var xorsPerColumn = computeXorStructure();
     drawNumbers();
-    drawLines();
-    drawDelays();
+    drawLines(xorsPerColumn);
+    drawDelays(xorsPerColumn);
     context.restore();
 }
 
