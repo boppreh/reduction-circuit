@@ -61,14 +61,6 @@ function xColumn(x) {
     return Math.round((1 - ratio) * (d));
 }
 
-function drawXor(x, y) {
-    context.arc(x, y, xorRadius, 0, Math.PI * 2);
-    context.moveTo(x-xorRadius, y);
-    context.lineTo(x+xorRadius, y);
-    context.moveTo(x, y-xorRadius);
-    context.lineTo(x, y+xorRadius);
-}
-
 function drawNumbers() {
     context.textAlign = "center";
     context.font = "26px mono";
@@ -80,27 +72,34 @@ function drawNumbers() {
 function drawLines(xorsPerColumn) {
     context.beginPath();
 
-    var height = 0;
-    var i = d;
-    for (; i >= m; i--) {
-        var right = i;
 
-        for (var j = 0; j < r.length; j++) {
-            var left = right - m + r[j];
-
-            var y = heightY(height++);
-
-            context.moveTo(columnX(right), y);
-            context.lineTo(columnX(left), y);
-            drawXor(columnX(left), y);
-        }
-
-        context.moveTo(columnX(right), startY);
-        context.lineTo(columnX(right), heightY(height-1));
-    }
-    for (; i >= 0; i--) {
+    for (var i = 0; i < xorsPerColumn.length; i++) {
+        var xors = xorsPerColumn[i];
         context.moveTo(columnX(i), startY);
-        context.lineTo(columnX(i), canvas.height);
+        context.lineTo(columnX(i), heightY(0));
+        var xor;
+        for (var j = 1; j < xors.length; j++) {
+            xor = xors[j];
+            var x = columnX(xor.column);
+            var y = heightY(xor.height);
+            context.moveTo(x, heightY(xor.leftXor.height));
+            context.lineTo(x, y);
+
+            // Draw XOR symbol.
+            context.arc(x, y, xorRadius, 0, Math.PI * 2);
+            context.moveTo(x-xorRadius, y);
+            context.lineTo(x+xorRadius, y);
+            context.moveTo(x, y-xorRadius);
+            context.lineTo(x, y+xorRadius);
+
+            context.moveTo(x, y);
+            context.lineTo(columnX(xor.rightXor.column), heightY(xor.height));
+            context.lineTo(columnX(xor.rightXor.column), heightY(xor.rightXor.height));
+        }
+        if (i < m) {
+            context.moveTo(columnX(i), xor.height);
+            context.lineTo(columnX(i), canvas.height);
+        }
     }
     context.stroke();
 }
@@ -108,7 +107,7 @@ function drawLines(xorsPerColumn) {
 function computeXorStructure() {
     var xorsPerColumn = [];
     for (var i = 0; i <= d; i++) {
-        xorsPerColumn[i] = [];
+        xorsPerColumn[i] = [{"height": 0, "column": i, "delay": 0}];
     }
     var height = 0;
     for (var i = d; i >= m; i--) {
@@ -119,8 +118,8 @@ function computeXorStructure() {
             var lastRightXor = rightXors[rightXors.length-1];
             var leftXors = xorsPerColumn[left];
             var lastLeftXor = leftXors[leftXors.length-1];
-            var lastLeftDelay = lastLeftXor ? lastLeftXor.delay : 0;
-            var lastRightDelay = lastRightXor ? lastRightXor.delay : 0;
+            var lastLeftDelay = lastLeftXor.delay;
+            var lastRightDelay = lastRightXor.delay;
             var delay = Math.max(lastLeftDelay, lastRightDelay) + 1;
             xorsPerColumn[left].push({"height": height++, "column": left, "leftXor": lastLeftXor, "rightXor": lastRightXor, "delay": delay});
         }
@@ -133,17 +132,9 @@ function computeCriticalPath(column) {
     var xors = xorsPerColumn[column];
     var xor = xors[xors.length-1];
     var criticalPath = [];
-    while (xor) {
+    while (xor.delay) {
         criticalPath.push(xor);
-        if (xor.rightXor === undefined) {
-            xor = xor.leftXor;
-        } else if (xor.leftXor === undefined) {
-            xor = xor.rightXor;
-        } else if (xor.rightXor.delay >= xor.leftXor.delay) {
-            xor = xor.rightXor;
-        } else {
-            xor = xor.leftXor;
-        }
+        xor = (xor.rightXor.delay >= xor.leftXor.delay) ? xor.rightXor : xor.leftXor;
     }
     return criticalPath;
 }
