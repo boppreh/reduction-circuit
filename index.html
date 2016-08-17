@@ -200,6 +200,7 @@ function drawXorPath(path) {
     context.stroke();
     context.restore();
 }
+
 function drawDelays(xorsPerColumn) {
     context.save();
     context.textAlign = "left";
@@ -209,7 +210,7 @@ function drawDelays(xorsPerColumn) {
         var xors = xorsPerColumn[i];
         var last = xors[xors.length - 1];
         var delay = last ? last.delay : 0;
-        context.fillText(delay, columnX(i), canvas.height - padding + 18);
+        context.fillText(delay, columnX(i)+5, canvas.height - padding + 18);
     }
     context.restore();
 }
