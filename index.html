@@ -47,7 +47,7 @@ for (var i = 0; i <= d; i++) {
     reductionState.push(1);
     squaringState.push(0);
 }
-var operationState = reductionState;
+var operationState = squaringState;
 
 var padding = 40;
 var startY = padding;
@@ -79,32 +79,34 @@ function drawNumbers() {
 function drawLines(xorsPerColumn) {
     context.beginPath();
 
-
     for (var i = 0; i < xorsPerColumn.length; i++) {
         var xors = xorsPerColumn[i];
         context.moveTo(columnX(i), startY);
         context.lineTo(columnX(i), heightY(0));
-        var xor;
+        var xor = xors[0];
+        console.log(i, xors.length);
         for (var j = 1; j < xors.length; j++) {
             xor = xors[j];
             var x = columnX(xor.column);
             var y = heightY(xor.height);
-            context.moveTo(x, heightY(xor.leftXor.height));
+            context.moveTo(columnX(xor.rightXor.column), heightY(xor.rightXor.height));
+            context.lineTo(columnX(xor.rightXor.column), y);
             context.lineTo(x, y);
 
-            // Draw XOR symbol.
-            context.arc(x, y, xorRadius, 0, Math.PI * 2);
-            context.moveTo(x-xorRadius, y);
-            context.lineTo(x+xorRadius, y);
-            context.moveTo(x, y-xorRadius);
-            context.lineTo(x, y+xorRadius);
+            if (xor.rightXor !== xor.leftXor) {
+                context.lineTo(x, heightY(xor.leftXor.height));
 
-            context.moveTo(x, y);
-            context.lineTo(columnX(xor.rightXor.column), heightY(xor.height));
-            context.lineTo(columnX(xor.rightXor.column), heightY(xor.rightXor.height));
+                // Draw XOR symbol.
+                context.moveTo(x, y);
+                context.arc(x, y, xorRadius, 0, Math.PI * 2);
+                context.moveTo(x-xorRadius, y);
+                context.lineTo(x+xorRadius, y);
+                context.moveTo(x, y-xorRadius);
+                context.lineTo(x, y+xorRadius);
+            }
         }
         if (i < m) {
-            context.moveTo(columnX(i), xor.height);
+            context.moveTo(columnX(i), heightY(xor.height));
             context.lineTo(columnX(i), canvas.height);
         }
     }
@@ -132,10 +134,10 @@ function computeXorStructure(assignmentState) {
             var lastLeftXor = leftXors[leftXors.length-1];
             var lastLeftDelay = lastLeftXor.delay;
             var lastRightDelay = lastRightXor.delay;
-            var delay = Math.max(lastLeftDelay, lastRightDelay) + 1;
             if (left%2 && assignmentState[left] == 0) {
-                continue
+                xorsPerColumn[left].push({"height": height++, "column": left, "leftXor": lastRightXor, "rightXor": lastRightXor, "delay": lastRightDelay});
             } else {
+                var delay = Math.max(lastLeftDelay, lastRightDelay) + 1;
                 xorsPerColumn[left].push({"height": height++, "column": left, "leftXor": lastLeftXor, "rightXor": lastRightXor, "delay": delay});
             }
             assignmentState[left] = 1;
