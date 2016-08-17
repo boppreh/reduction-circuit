@@ -171,7 +171,7 @@ function computeCriticalPath(column) {
     var xors = xorsPerColumn[column];
     var xor = xors[xors.length-1];
     var criticalPath = [xor];
-    while (xor.delay) {
+    while (xor.rightXor) {
         xor = (xor.rightXor.delay >= xor.leftXor.delay) ? xor.rightXor : xor.leftXor;
         criticalPath.push(xor);
     }
