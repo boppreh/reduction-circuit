@@ -55,14 +55,13 @@ function Circuit(f) {
         return startY + (xorPadding + 2 * xorRadius) * (height + 1);
     }
     function columnWidth() {
-        return (canvas.width - 2 * padding) / d;
+        return Math.ceil((canvas.width - 2 * padding) / d);
     }
     function columnX(col) {
-        return padding + (1 - col / d) * (canvas.width - 2 * padding);
+        return padding + (d - col) * columnWidth();
     }
     function xColumn(x) {
-        var ratio = (x - padding) / (canvas.width - 2 * padding);
-        return Math.round((1 - ratio) * (d));
+        return Math.round(d - (x - padding) / columnWidth());
     }
 
     function drawNumbers() {
@@ -218,7 +217,7 @@ function Circuit(f) {
         context.clearRect(0, 0, canvas.width, canvas.height);
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        xorRadius = canvas.height / (d * f.length) / 2;
+        xorRadius = Math.ceil(canvas.height / (d * f.length) / 2);
         xorPadding = xorRadius;
         var xorsPerColumn = computeXorStructure(operationState);
         drawNumbers();
