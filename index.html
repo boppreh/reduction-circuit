@@ -244,7 +244,7 @@ redrawEverything();
 window.addEventListener("resize", debounce(redrawEverything, 100));
 window.addEventListener("mousemove", function(event) {   
     var column = xColumn(event.clientX);
-    if (column != lastColumnSelected) {
+    if (column >= 0 && column <= d && column != lastColumnSelected) {
         lastColumnSelected = column;
         redrawEverything();
         drawXorPath(computeCriticalPath(column));
