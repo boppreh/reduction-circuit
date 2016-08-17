@@ -53,6 +53,7 @@ var padding = 40;
 var startY = padding;
 var xorRadius = 10;
 var xorPadding = 10;
+var curveRadius = 8;
 
 function heightY(height) {
     return startY + (xorPadding + 2 * xorRadius) * (height + 1);
@@ -77,6 +78,24 @@ function drawNumbers() {
 }
 
 function drawLines(xorsPerColumn) {
+    function drawXor(x, y) {
+        context.stroke();
+        context.beginPath();
+
+        context.save();
+        context.lineWidth += 1;
+        context.moveTo(x, y);
+        context.arc(x, y, xorRadius, 0, Math.PI * 2);
+        context.moveTo(x-xorRadius, y);
+        context.lineTo(x+xorRadius, y);
+        context.moveTo(x, y-xorRadius);
+        context.lineTo(x, y+xorRadius);
+        context.stroke();
+        context.restore();
+
+        context.beginPath();
+    }
+
     context.beginPath();
 
     for (var i = 0; i < xorsPerColumn.length; i++) {
@@ -84,29 +103,30 @@ function drawLines(xorsPerColumn) {
         context.moveTo(columnX(i), startY);
         context.lineTo(columnX(i), heightY(0));
         var xor = xors[0];
-        console.log(i, xors.length);
         for (var j = 1; j < xors.length; j++) {
             xor = xors[j];
             var x = columnX(xor.column);
             var y = heightY(xor.height);
-            context.moveTo(columnX(xor.rightXor.column), heightY(xor.rightXor.height));
-            context.lineTo(columnX(xor.rightXor.column), y);
-            context.lineTo(x, y);
+            var rightX = columnX(xor.rightXor.column);
+            context.moveTo(rightX, heightY(xor.rightXor.height));
+            context.lineTo(rightX, y-curveRadius);
+            context.quadraticCurveTo(rightX, y, rightX+curveRadius, y);
+            context.lineTo(x-curveRadius, y);
 
             if (xor.rightXor !== xor.leftXor) {
-                context.lineTo(x, heightY(xor.leftXor.height));
-
-                // Draw XOR symbol.
                 context.moveTo(x, y);
-                context.arc(x, y, xorRadius, 0, Math.PI * 2);
-                context.moveTo(x-xorRadius, y);
-                context.lineTo(x+xorRadius, y);
-                context.moveTo(x, y-xorRadius);
-                context.lineTo(x, y+xorRadius);
+                context.lineTo(x, heightY(xor.leftXor.height));
+                drawXor(x, y);
+            } else {
+                context.quadraticCurveTo(x, y, x, y+curveRadius);
             }
         }
         if (i < m) {
-            context.moveTo(columnX(i), heightY(xor.height));
+            if (xor.height) {
+                context.moveTo(columnX(i), heightY(xor.height)+curveRadius);
+            } else {
+                context.moveTo(columnX(i), heightY(0));
+            }
             context.lineTo(columnX(i), canvas.height);
         }
     }
