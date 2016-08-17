@@ -101,7 +101,7 @@ function drawLines(xorsPerColumn) {
     for (var i = 0; i < xorsPerColumn.length; i++) {
         var xors = xorsPerColumn[i];
         context.moveTo(columnX(i), startY);
-        context.lineTo(columnX(i), heightY(0));
+        context.lineTo(columnX(i), heightY(0)+curveRadius);
         var xor = xors[0];
         for (var j = 1; j < xors.length; j++) {
             xor = xors[j];
@@ -115,17 +115,19 @@ function drawLines(xorsPerColumn) {
 
             if (xor.rightXor !== xor.leftXor) {
                 context.lineTo(x, y);
-                context.lineTo(x, heightY(xor.leftXor.height));
+                context.lineTo(x, heightY(xor.leftXor.height)+curveRadius);
                 drawXor(x, y);
+                context.moveTo(x, y);
+                context.lineTo(x, y+curveRadius);
             } else {
                 context.quadraticCurveTo(x, y, x, y+curveRadius);
             }
         }
         if (i < m) {
             if (xor.height) {
-                context.moveTo(columnX(i), heightY(xor.height));
+                context.moveTo(columnX(i), heightY(xor.height)+curveRadius);
             } else {
-                context.moveTo(columnX(i), heightY(0));
+                context.moveTo(columnX(i), heightY(0)+curveRadius);
             }
             context.lineTo(columnX(i), canvas.height);
         }
