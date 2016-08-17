@@ -216,23 +216,8 @@ function debounce(fn, timeout) {
 redrawEverything();
 window.addEventListener("resize", debounce(redrawEverything, 100));
 window.addEventListener("mousemove", debounce(function(event) {   
-    var column = xColumn(event.clientX);
-    if (column < 0 || column > d) {
-        var xorStructure = computeXorStructure();
-        var maxDelay = -1;
-        var maxDelayColumn = -1;
-        for (var i = 0; i < xorStructure.length; i++) {
-            var xors = xorStructure[i];
-            var last = xors[xors.length - 1];
-            if (last.delay >= maxDelay) {
-                maxDelay = last.delay;
-                maxDelayColumn = last.column;
-            }
-        }
-        column = maxDelayColumn;
-    }
     redrawEverything();
-    drawCriticalPath(column);
+    drawCriticalPath(xColumn(event.clientX));
 }, 100));
 
         </script>
