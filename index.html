@@ -114,7 +114,7 @@ function drawLines(xorsPerColumn) {
             context.lineTo(x-curveRadius, y);
 
             if (xor.rightXor !== xor.leftXor) {
-                context.moveTo(x, y);
+                context.lineTo(x, y);
                 context.lineTo(x, heightY(xor.leftXor.height));
                 drawXor(x, y);
             } else {
@@ -123,7 +123,7 @@ function drawLines(xorsPerColumn) {
         }
         if (i < m) {
             if (xor.height) {
-                context.moveTo(columnX(i), heightY(xor.height)+curveRadius);
+                context.moveTo(columnX(i), heightY(xor.height));
             } else {
                 context.moveTo(columnX(i), heightY(0));
             }
