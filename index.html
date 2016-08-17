@@ -41,6 +41,13 @@ if (hash) {
 var r = f.slice(1);
 var m = f[0];
 var d = 2*m - 2;
+var reductionState = [];
+var squaringState = [];
+for (var i = 0; i <= d; i++) {
+    reductionState.push(1);
+    squaringState.push(0);
+}
+var operationState = reductionState;
 
 var padding = 40;
 var startY = padding;
@@ -104,7 +111,9 @@ function drawLines(xorsPerColumn) {
     context.stroke();
 }
 
-function computeXorStructure() {
+function computeXorStructure(assignmentState) {
+    assignmentState = assignmentState.slice(0); // clone array.
+
     var xorsPerColumn = [];
     for (var i = 0; i <= d; i++) {
         xorsPerColumn[i] = [{"height": 0, "column": i, "delay": 0}];
@@ -112,6 +121,9 @@ function computeXorStructure() {
     var height = 0;
     for (var i = d; i >= m; i--) {
         var right = i;
+        if (right%2 && assignmentState[right] == 0) {
+            continue;
+        }
         for (var j = 0; j < r.length; j++) {
             var left = right - m + r[j];
             var rightXors = xorsPerColumn[right];
@@ -121,14 +133,19 @@ function computeXorStructure() {
             var lastLeftDelay = lastLeftXor.delay;
             var lastRightDelay = lastRightXor.delay;
             var delay = Math.max(lastLeftDelay, lastRightDelay) + 1;
-            xorsPerColumn[left].push({"height": height++, "column": left, "leftXor": lastLeftXor, "rightXor": lastRightXor, "delay": delay});
+            if (left%2 && assignmentState[left] == 0) {
+                continue
+            } else {
+                xorsPerColumn[left].push({"height": height++, "column": left, "leftXor": lastLeftXor, "rightXor": lastRightXor, "delay": delay});
+            }
+            assignmentState[left] = 1;
         }
     }
     return xorsPerColumn;
 }
 
 function computeCriticalPath(column) {
-    var xorsPerColumn = computeXorStructure();
+    var xorsPerColumn = computeXorStructure(operationState);
     var xors = xorsPerColumn[column];
     var xor = xors[xors.length-1];
     var criticalPath = [xor];
@@ -182,7 +199,7 @@ function redrawEverything() {
     canvas.height = window.innerHeight;
     xorRadius = canvas.height / (d * f.length) / 2;
     xorPadding = xorRadius;
-    var xorsPerColumn = computeXorStructure();
+    var xorsPerColumn = computeXorStructure(operationState);
     drawNumbers();
     drawLines(xorsPerColumn);
     drawDelays(xorsPerColumn);
