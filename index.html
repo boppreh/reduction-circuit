@@ -200,12 +200,17 @@ function debounce(fn, timeout) {
     }
 }
 
+var lastColumnSelected = -1;
 redrawEverything();
 window.addEventListener("resize", debounce(redrawEverything, 100));
-window.addEventListener("mousemove", debounce(function(event) {   
-    redrawEverything();
-    drawCriticalPath(xColumn(event.clientX));
-}, 100));
+window.addEventListener("mousemove", function(event) {   
+    var column = xColumn(event.clientX);
+    if (column != lastColumnSelected) {
+        lastColumnSelected = column;
+        redrawEverything();
+        drawCriticalPath(column);
+    }
+});
 
         </script>
     </body>
