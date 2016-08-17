@@ -32,204 +32,228 @@ context.strokeWidth = 1;
 context.save();
 
 var hash = window.location.hash;
-var f;
-if (hash) {
-    f = window.location.hash.slice(1).split(',').map(Number);
-} else {
-    f = [7, 6, 2, 1, 0];
-}
-var r = f.slice(1);
-var m = f[0];
-var d = 2*m - 2;
-var reductionState = [];
-var squaringState = [];
-for (var i = 0; i <= d; i++) {
-    reductionState.push(1);
-    squaringState.push(0);
-}
-var operationState = squaringState;
 
-var padding = 40;
-var startY = padding;
-var xorRadius = 10;
-var xorPadding = 10;
-var curveRadius = 8;
-
-function heightY(height) {
-    return startY + (xorPadding + 2 * xorRadius) * (height + 1);
-}
-function columnWidth() {
-    return (canvas.width - 2 * padding) / d;
-}
-function columnX(col) {
-    return padding + (1 - col / d) * (canvas.width - 2 * padding);
-}
-function xColumn(x) {
-    var ratio = (x - padding) / (canvas.width - 2 * padding);
-    return Math.round((1 - ratio) * (d));
-}
-
-function drawNumbers() {
-    context.textAlign = "center";
-    context.font = "26px mono";
+function Circuit(f) {
+    var r = f.slice(1);
+    var m = f[0];
+    var d = 2*m - 2;
+    var reductionState = [];
+    var squaringState = [];
     for (var i = 0; i <= d; i++) {
-        context.fillText(i, columnX(i), padding * 3/4, columnWidth());
+        reductionState.push(1);
+        squaringState.push(0);
     }
-}
+    var operationState = squaringState;
 
-function drawLines(xorsPerColumn) {
-    function drawXor(x, y) {
-        context.stroke();
+    var padding = 40;
+    var startY = padding;
+    var xorRadius = 10;
+    var xorPadding = 10;
+    var curveRadius = 8;
+
+    function heightY(height) {
+        return startY + (xorPadding + 2 * xorRadius) * (height + 1);
+    }
+    function columnWidth() {
+        return (canvas.width - 2 * padding) / d;
+    }
+    function columnX(col) {
+        return padding + (1 - col / d) * (canvas.width - 2 * padding);
+    }
+    function xColumn(x) {
+        var ratio = (x - padding) / (canvas.width - 2 * padding);
+        return Math.round((1 - ratio) * (d));
+    }
+
+    function drawNumbers() {
+        context.textAlign = "center";
+        context.font = "26px mono";
+        for (var i = 0; i <= d; i++) {
+            context.fillText(i, columnX(i), padding * 3/4, columnWidth());
+        }
+    }
+
+    function drawLines(xorsPerColumn) {
+        function drawXor(x, y) {
+            context.stroke();
+            context.beginPath();
+
+            context.save();
+            context.lineWidth += 1;
+            context.moveTo(x, y);
+            context.arc(x, y, xorRadius, 0, Math.PI * 2);
+            context.moveTo(x-xorRadius, y);
+            context.lineTo(x+xorRadius, y);
+            context.moveTo(x, y-xorRadius);
+            context.lineTo(x, y+xorRadius);
+            context.stroke();
+            context.restore();
+
+            context.beginPath();
+        }
+
         context.beginPath();
 
+        for (var i = 0; i < xorsPerColumn.length; i++) {
+            var xors = xorsPerColumn[i];
+            context.moveTo(columnX(i), startY);
+            context.lineTo(columnX(i), heightY(0)+curveRadius);
+            var xor = xors[0];
+            for (var j = 1; j < xors.length; j++) {
+                xor = xors[j];
+                var x = columnX(xor.column);
+                var y = heightY(xor.height);
+                var rightX = columnX(xor.rightXor.column);
+                context.moveTo(rightX, heightY(xor.rightXor.height));
+                context.lineTo(rightX, y-curveRadius);
+                context.quadraticCurveTo(rightX, y, rightX+curveRadius, y);
+                context.lineTo(x-curveRadius, y);
+
+                if (xor.rightXor !== xor.leftXor) {
+                    context.lineTo(x, y);
+                    context.lineTo(x, heightY(xor.leftXor.height)+curveRadius);
+                    drawXor(x, y);
+                    context.moveTo(x, y);
+                    context.lineTo(x, y+curveRadius);
+                } else {
+                    context.quadraticCurveTo(x, y, x, y+curveRadius);
+                }
+            }
+            if (i < m) {
+                if (xor.height) {
+                    context.moveTo(columnX(i), heightY(xor.height)+curveRadius);
+                } else {
+                    context.moveTo(columnX(i), heightY(0)+curveRadius);
+                }
+                context.lineTo(columnX(i), canvas.height);
+            }
+        }
+        context.stroke();
+    }
+
+    function computeXorStructure(assignmentState) {
+        assignmentState = assignmentState.slice(0); // clone array.
+
+        var xorsPerColumn = [];
+        for (var i = 0; i <= d; i++) {
+            xorsPerColumn[i] = [{"height": 0, "column": i, "delay": 0}];
+        }
+        var height = 0;
+        for (var i = d; i >= m; i--) {
+            var right = i;
+            if (right%2 && assignmentState[right] == 0) {
+                continue;
+            }
+            for (var j = 0; j < r.length; j++) {
+                var left = right - m + r[j];
+                var rightXors = xorsPerColumn[right];
+                var lastRightXor = rightXors[rightXors.length-1];
+                var leftXors = xorsPerColumn[left];
+                var lastLeftXor = leftXors[leftXors.length-1];
+                var lastLeftDelay = lastLeftXor.delay;
+                var lastRightDelay = lastRightXor.delay;
+                if (left%2 && assignmentState[left] == 0) {
+                    xorsPerColumn[left].push({"height": height++, "column": left, "leftXor": lastRightXor, "rightXor": lastRightXor, "delay": lastRightDelay});
+                } else {
+                    var delay = Math.max(lastLeftDelay, lastRightDelay) + 1;
+                    xorsPerColumn[left].push({"height": height++, "column": left, "leftXor": lastLeftXor, "rightXor": lastRightXor, "delay": delay});
+                }
+                assignmentState[left] = 1;
+            }
+        }
+        return xorsPerColumn;
+    }
+
+    function computeCriticalPath(column) {
+        var xorsPerColumn = computeXorStructure(operationState);
+        var xors = xorsPerColumn[column];
+        var xor = xors[xors.length-1];
+        var criticalPath = [xor];
+        while (xor.rightXor) {
+            xor = (xor.rightXor.delay >= xor.leftXor.delay) ? xor.rightXor : xor.leftXor;
+            criticalPath.push(xor);
+        }
+        return criticalPath;
+    }
+
+    function drawXorPath(path) {
         context.save();
-        context.lineWidth += 1;
-        context.moveTo(x, y);
-        context.arc(x, y, xorRadius, 0, Math.PI * 2);
-        context.moveTo(x-xorRadius, y);
-        context.lineTo(x+xorRadius, y);
-        context.moveTo(x, y-xorRadius);
-        context.lineTo(x, y+xorRadius);
+        context.strokeStyle = "#502010";
+        context.lineWidth = 3;
+        context.beginPath();
+        var lastColumn = path[0].column;
+        var lastY = startY;
+        context.moveTo(columnX(lastColumn), canvas.height);
+        for (var i = 0; i < path.length; i++) {
+            var xor = path[i];
+            var y = heightY(xor.height);
+            if (lastColumn != xor.column) {
+                context.lineTo(columnX(xor.column), lastY);
+            }
+            context.lineTo(columnX(xor.column), y);
+            lastColumn = xor.column;
+            lastY = y;
+        }
+        context.lineTo(columnX(xor.column), startY);
         context.stroke();
         context.restore();
-
-        context.beginPath();
     }
 
-    context.beginPath();
-
-    for (var i = 0; i < xorsPerColumn.length; i++) {
-        var xors = xorsPerColumn[i];
-        context.moveTo(columnX(i), startY);
-        context.lineTo(columnX(i), heightY(0)+curveRadius);
-        var xor = xors[0];
-        for (var j = 1; j < xors.length; j++) {
-            xor = xors[j];
-            var x = columnX(xor.column);
-            var y = heightY(xor.height);
-            var rightX = columnX(xor.rightXor.column);
-            context.moveTo(rightX, heightY(xor.rightXor.height));
-            context.lineTo(rightX, y-curveRadius);
-            context.quadraticCurveTo(rightX, y, rightX+curveRadius, y);
-            context.lineTo(x-curveRadius, y);
-
-            if (xor.rightXor !== xor.leftXor) {
-                context.lineTo(x, y);
-                context.lineTo(x, heightY(xor.leftXor.height)+curveRadius);
-                drawXor(x, y);
-                context.moveTo(x, y);
-                context.lineTo(x, y+curveRadius);
-            } else {
-                context.quadraticCurveTo(x, y, x, y+curveRadius);
-            }
+    function drawDelays(xorsPerColumn) {
+        context.save();
+        context.textAlign = "left";
+        context.font = "18px mono";
+        context.fillStyle = "#502010";
+        for (var i = 0; i <= d; i++) {
+            var xors = xorsPerColumn[i];
+            var last = xors[xors.length - 1];
+            var delay = last ? last.delay : 0;
+            context.fillText(delay, columnX(i)+5, canvas.height - padding + 18);
         }
-        if (i < m) {
-            if (xor.height) {
-                context.moveTo(columnX(i), heightY(xor.height)+curveRadius);
-            } else {
-                context.moveTo(columnX(i), heightY(0)+curveRadius);
-            }
-            context.lineTo(columnX(i), canvas.height);
-        }
+        context.restore();
     }
-    context.stroke();
-}
 
-function computeXorStructure(assignmentState) {
-    assignmentState = assignmentState.slice(0); // clone array.
-
-    var xorsPerColumn = [];
-    for (var i = 0; i <= d; i++) {
-        xorsPerColumn[i] = [{"height": 0, "column": i, "delay": 0}];
+    function redrawEverything() {
+        context.save();
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        xorRadius = canvas.height / (d * f.length) / 2;
+        xorPadding = xorRadius;
+        var xorsPerColumn = computeXorStructure(operationState);
+        drawNumbers();
+        drawLines(xorsPerColumn);
+        drawDelays(xorsPerColumn);
+        context.restore();
     }
-    var height = 0;
-    for (var i = d; i >= m; i--) {
-        var right = i;
-        if (right%2 && assignmentState[right] == 0) {
-            continue;
-        }
-        for (var j = 0; j < r.length; j++) {
-            var left = right - m + r[j];
-            var rightXors = xorsPerColumn[right];
-            var lastRightXor = rightXors[rightXors.length-1];
-            var leftXors = xorsPerColumn[left];
-            var lastLeftXor = leftXors[leftXors.length-1];
-            var lastLeftDelay = lastLeftXor.delay;
-            var lastRightDelay = lastRightXor.delay;
-            if (left%2 && assignmentState[left] == 0) {
-                xorsPerColumn[left].push({"height": height++, "column": left, "leftXor": lastRightXor, "rightXor": lastRightXor, "delay": lastRightDelay});
-            } else {
-                var delay = Math.max(lastLeftDelay, lastRightDelay) + 1;
-                xorsPerColumn[left].push({"height": height++, "column": left, "leftXor": lastLeftXor, "rightXor": lastRightXor, "delay": delay});
-            }
-            assignmentState[left] = 1;
+
+    var lastColumnSelected = -1;
+    function drawPathAt(x) {
+        var column = xColumn(x);
+        if (column >= 0 && column <= d && column != lastColumnSelected) {
+            lastColumnSelected = column;
+            redrawEverything();
+            drawXorPath(computeCriticalPath(column));
         }
     }
-    return xorsPerColumn;
-}
 
-function computeCriticalPath(column) {
-    var xorsPerColumn = computeXorStructure(operationState);
-    var xors = xorsPerColumn[column];
-    var xor = xors[xors.length-1];
-    var criticalPath = [xor];
-    while (xor.rightXor) {
-        xor = (xor.rightXor.delay >= xor.leftXor.delay) ? xor.rightXor : xor.leftXor;
-        criticalPath.push(xor);
-    }
-    return criticalPath;
-}
-
-function drawXorPath(path) {
-    context.save();
-    context.strokeStyle = "#502010";
-    context.lineWidth = 3;
-    context.beginPath();
-    var lastColumn = path[0].column;
-    var lastY = startY;
-    context.moveTo(columnX(lastColumn), canvas.height);
-    for (var i = 0; i < path.length; i++) {
-        var xor = path[i];
-        var y = heightY(xor.height);
-        if (lastColumn != xor.column) {
-            context.lineTo(columnX(xor.column), lastY);
+    function computeDelay() {
+        var xorsPerColumn = computeXorStructure(operationState);
+        var maxDelay = -1;
+        for (var i = 0; i < xorsPerColumn.length; i++) {
+            var xors = xorsPerColumn[i];
+            maxDelay = Math.max(maxDelay, xors[xors.length-1].delay);
         }
-        context.lineTo(columnX(xor.column), y);
-        lastColumn = xor.column;
-        lastY = y;
+        return maxDelay;
     }
-    context.lineTo(columnX(xor.column), startY);
-    context.stroke();
-    context.restore();
+
+    return {
+        "redrawEverything": redrawEverything,
+        "computeDelay": computeDelay,
+        "drawPathAt": drawPathAt,
+    };
 }
 
-function drawDelays(xorsPerColumn) {
-    context.save();
-    context.textAlign = "left";
-    context.font = "18px mono";
-    context.fillStyle = "#502010";
-    for (var i = 0; i <= d; i++) {
-        var xors = xorsPerColumn[i];
-        var last = xors[xors.length - 1];
-        var delay = last ? last.delay : 0;
-        context.fillText(delay, columnX(i)+5, canvas.height - padding + 18);
-    }
-    context.restore();
-}
-
-function redrawEverything() {
-    context.save();
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    xorRadius = canvas.height / (d * f.length) / 2;
-    xorPadding = xorRadius;
-    var xorsPerColumn = computeXorStructure(operationState);
-    drawNumbers();
-    drawLines(xorsPerColumn);
-    drawDelays(xorsPerColumn);
-    context.restore();
-}
 
 function debounce(fn, timeout) {
     var id;
@@ -241,16 +265,18 @@ function debounce(fn, timeout) {
     }
 }
 
-var lastColumnSelected = -1;
-redrawEverything();
-window.addEventListener("resize", debounce(redrawEverything, 100));
+var f;
+if (hash) {
+    f = window.location.hash.slice(1).split(',').map(Number);
+} else {
+    f = [7, 6, 2, 1, 0];
+}
+var circuit = new Circuit(f);
+
+circuit.redrawEverything();
+window.addEventListener("resize", debounce(circuit.redrawEverything, 100));
 window.addEventListener("mousemove", function(event) {   
-    var column = xColumn(event.clientX);
-    if (column >= 0 && column <= d && column != lastColumnSelected) {
-        lastColumnSelected = column;
-        redrawEverything();
-        drawXorPath(computeCriticalPath(column));
-    }
+    circuit.drawPathAt(event.clientX);
 });
 
         </script>
