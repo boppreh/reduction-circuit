@@ -131,25 +131,24 @@ function computeCriticalPath(column) {
     var xorsPerColumn = computeXorStructure();
     var xors = xorsPerColumn[column];
     var xor = xors[xors.length-1];
-    var criticalPath = [];
+    var criticalPath = [xor];
     while (xor.delay) {
-        criticalPath.push(xor);
         xor = (xor.rightXor.delay >= xor.leftXor.delay) ? xor.rightXor : xor.leftXor;
+        criticalPath.push(xor);
     }
     return criticalPath;
 }
 
-function drawCriticalPath(column) {
+function drawXorPath(path) {
     context.save();
     context.strokeStyle = "#502010";
     context.lineWidth = 3;
     context.beginPath();
-    var criticalPath = computeCriticalPath(column);
-    var lastColumn = column;
+    var lastColumn = path[0].column;
     var lastY = startY;
     context.moveTo(columnX(lastColumn), canvas.height);
-    for (var i = 0; i < criticalPath.length; i++) {
-        var xor = criticalPath[i];
+    for (var i = 0; i < path.length; i++) {
+        var xor = path[i];
         var y = heightY(xor.height);
         if (lastColumn != xor.column) {
             context.lineTo(columnX(xor.column), lastY);
@@ -158,7 +157,7 @@ function drawCriticalPath(column) {
         lastColumn = xor.column;
         lastY = y;
     }
-    context.lineTo(columnX(xor ? xor.column : column), startY);
+    context.lineTo(columnX(xor.column), startY);
     context.stroke();
     context.restore();
 }
@@ -208,7 +207,7 @@ window.addEventListener("mousemove", function(event) {
     if (column != lastColumnSelected) {
         lastColumnSelected = column;
         redrawEverything();
-        drawCriticalPath(column);
+        drawXorPath(computeCriticalPath(column));
     }
 });
 
