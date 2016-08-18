@@ -163,9 +163,11 @@ function Circuit(f) {
         return xorsPerColumn;
     }
 
-    function computeCriticalPath(column) {
-        var xorsPerColumn = computeXorStructure(operationState);
-        var xors = xorsPerColumn[column];
+    function annotateColumn(xorsPerColumn, column) {
+
+    }
+
+    function computeCriticalPath(xors) {
         var xor = xors[xors.length-1];
         var criticalPath = [xor];
         while (xor.rightXor) {
@@ -212,6 +214,7 @@ function Circuit(f) {
         context.restore();
     }
 
+    var xorsPerColumn = computeXorStructure(operationState);
     function redrawEverything() {
         context.save();
         context.clearRect(0, 0, canvas.width, canvas.height);
@@ -219,7 +222,6 @@ function Circuit(f) {
         canvas.height = window.innerHeight;
         xorRadius = Math.ceil(canvas.height / (d * f.length) / 2);
         xorPadding = xorRadius;
-        var xorsPerColumn = computeXorStructure(operationState);
         drawNumbers();
         drawLines(xorsPerColumn);
         drawDelays(xorsPerColumn);
@@ -232,12 +234,11 @@ function Circuit(f) {
         if (column >= 0 && column <= d && column != lastColumnSelected) {
             lastColumnSelected = column;
             redrawEverything();
-            drawXorPath(computeCriticalPath(column));
+            drawXorPath(computeCriticalPath(xorsPerColumn[column]));
         }
     }
 
     function computeDelay() {
-        var xorsPerColumn = computeXorStructure(operationState);
         var maxDelay = -1;
         for (var i = 0; i < xorsPerColumn.length; i++) {
             var xors = xorsPerColumn[i];
