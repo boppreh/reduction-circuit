@@ -211,6 +211,11 @@ function Circuit(f) {
     }
 
     var xorsPerColumn = computeXorStructure(operationState);
+    var maxHeight = 0;
+    for (var i = 0; i < xorsPerColumn.length; i++) {
+        var xors = xorsPerColumn[i];
+        maxHeight = Math.max(maxHeight, xors[xors.length-1].height);
+    }
     function redrawEverything(column) {
         column = Math.max(0, Math.min(d, column));
 
@@ -220,7 +225,7 @@ function Circuit(f) {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        xorRadius = Math.ceil(canvas.height / (d * f.length) / 2);
+        xorRadius = Math.ceil((canvas.height - 2 * padding + 18) / (4*maxHeight));
         xorPadding = xorRadius;
 
         drawNumbers();
