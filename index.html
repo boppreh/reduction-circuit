@@ -163,8 +163,18 @@ function Circuit(f) {
         return xorsPerColumn;
     }
 
-    function annotateColumn(xorsPerColumn, column) {
+    function walkUp(xor) {
+        if (xor) {
+            return [xor].concat(walkUp(xor.leftXor)).concat(walkUp(xor.rightXor));
+        } else {
+            return [];
+        }
+    }
 
+    function relatedXors(column, xorsPerColumn) {
+        var columnXors = xorsPerColumn[column];
+        var lastXor = columnXors[columnXors.length-1];
+        return walkUp(lastXor);
     }
 
     function computeCriticalPath(xors) {
@@ -215,27 +225,25 @@ function Circuit(f) {
     }
 
     var xorsPerColumn = computeXorStructure(operationState);
-    function redrawEverything() {
+    function redrawEverything(highlightedColumn) {
+        highlightedColumn = Math.max(0, Math.min(d, highlightedColumn));
+        var highlightedXors = relatedXors(highlightedColumn, xorsPerColumn);
+
         context.save();
+
         context.clearRect(0, 0, canvas.width, canvas.height);
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+
         xorRadius = Math.ceil(canvas.height / (d * f.length) / 2);
         xorPadding = xorRadius;
+
         drawNumbers();
         drawLines(xorsPerColumn);
         drawDelays(xorsPerColumn);
-        context.restore();
-    }
+        drawXorPath(computeCriticalPath(xorsPerColumn[highlightedColumn]));
 
-    var lastColumnSelected = -1;
-    function drawPathAt(x) {
-        var column = xColumn(x);
-        if (column >= 0 && column <= d && column != lastColumnSelected) {
-            lastColumnSelected = column;
-            redrawEverything();
-            drawXorPath(computeCriticalPath(xorsPerColumn[column]));
-        }
+        context.restore();
     }
 
     function computeDelay() {
@@ -250,7 +258,7 @@ function Circuit(f) {
     return {
         "redrawEverything": redrawEverything,
         "computeDelay": computeDelay,
-        "drawPathAt": drawPathAt,
+        "xColumn": xColumn,
     };
 }
 
@@ -273,10 +281,18 @@ if (hash) {
 }
 var circuit = new Circuit(f);
 
-circuit.redrawEverything();
-window.addEventListener("resize", debounce(circuit.redrawEverything, 100));
+var lastColumnSelected = f[1];
+
+circuit.redrawEverything(lastColumnSelected);
+window.addEventListener("resize", debounce(function() {
+    circuit.redrawEverything(lastColumnSelected);
+}, 100));
 window.addEventListener("mousemove", function(event) {   
-    circuit.drawPathAt(event.clientX);
+    var column = circuit.xColumn(event.clientX);
+    if (column != lastColumnSelected) {
+        lastColumnSelected = column;
+        circuit.redrawEverything(lastColumnSelected);
+    }
 });
 
 //alert(Circuit([163,7,6,3,0]).computeDelay()); // 4
