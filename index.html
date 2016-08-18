@@ -72,24 +72,20 @@ function Circuit(f) {
         }
     }
 
+    function drawXor(x, y) {
+        context.beginPath();
+        context.lineWidth += 1;
+        context.moveTo(x, y);
+        context.arc(x, y, xorRadius, 0, Math.PI * 2);
+        context.moveTo(x-xorRadius, y);
+        context.lineTo(x+xorRadius, y);
+        context.moveTo(x, y-xorRadius);
+        context.lineTo(x, y+xorRadius);
+        context.stroke();
+        context.lineWidth -= 1;
+    }
+
     function drawLines(xorsPerColumn) {
-        function drawXor(x, y) {
-            context.stroke();
-            context.beginPath();
-
-            context.save();
-            context.lineWidth += 1;
-            context.moveTo(x, y);
-            context.arc(x, y, xorRadius, 0, Math.PI * 2);
-            context.moveTo(x-xorRadius, y);
-            context.lineTo(x+xorRadius, y);
-            context.moveTo(x, y-xorRadius);
-            context.lineTo(x, y+xorRadius);
-            context.stroke();
-            context.restore();
-
-            context.beginPath();
-        }
 
         context.beginPath();
 
@@ -111,7 +107,9 @@ function Circuit(f) {
                 if (xor.rightXor !== xor.leftXor) {
                     context.lineTo(x, y);
                     context.lineTo(x, heightY(xor.leftXor.height)+curveRadius);
+                    context.stroke();
                     drawXor(x, y);
+                    context.beginPath();
                     context.moveTo(x, y);
                     context.lineTo(x, y+curveRadius);
                 } else {
@@ -173,26 +171,43 @@ function Circuit(f) {
         return criticalPath;
     }
 
+    function recursiveDrawPath(xor, path) {
+        var left = xor.leftXor;
+        var right = xor.rightXor;
+        context.beginPath();
+        if (left && right) {
+            context.moveTo(columnX(left.column), heightY(left.height));
+            context.lineTo(columnX(left.column), heightY(xor.height));
+            context.lineTo(columnX(xor.column), heightY(xor.height));
+            context.lineTo(columnX(right.column), heightY(xor.height));
+            context.lineTo(columnX(right.column), heightY(right.height));
+            context.stroke();
+            if (left !== right) {
+                context.strokeStyle = path.indexOf(xor) >= 0 ? "#502010" : "#0000FF";
+                drawXor(columnX(xor.column), heightY(xor.height));
+                context.strokeStyle = "#0000FF";
+            }
+            recursiveDrawPath(left, path);
+            recursiveDrawPath(right, path);
+        } else {
+            context.moveTo(columnX(xor.column), heightY(xor.height));
+            context.lineTo(columnX(xor.column), startY);
+            context.stroke();
+        }
+    }
+
     function drawXorPath(path) {
         context.save();
-        context.strokeStyle = "#502010";
         context.lineWidth = 3;
+
+        var lastXor = path[0];
+        context.strokeStyle = "#0000FF";
         context.beginPath();
-        var lastColumn = path[0].column;
-        var lastY = startY;
-        context.moveTo(columnX(lastColumn), canvas.height);
-        for (var i = 0; i < path.length; i++) {
-            var xor = path[i];
-            var y = heightY(xor.height);
-            if (lastColumn != xor.column) {
-                context.lineTo(columnX(xor.column), lastY);
-            }
-            context.lineTo(columnX(xor.column), y);
-            lastColumn = xor.column;
-            lastY = y;
-        }
-        context.lineTo(columnX(xor.column), startY);
+        context.moveTo(columnX(lastXor.column), canvas.height);
+        context.lineTo(columnX(lastXor.column), heightY(lastXor.height));
         context.stroke();
+
+        recursiveDrawPath(path[0], path);
         context.restore();
     }
 
