@@ -303,18 +303,23 @@ window.addEventListener("mousemove", function(event) {
 //alert(Circuit([163,7,6,3,0]).computeDelay()); // 4
 //alert(Circuit([283,12,7,5,0]).computeDelay()); // 4
 //alert(Circuit([571,10,5,2,0]).computeDelay()); // 3
-/*
-//for (var m = 11; m <= 21; m+=2) {
-for (var m = 101; m <= 101; m+=2) {
-    for (var c = 1; c < m-2; c++) {
-        for (var b = c+1; b < m-1; b++) {
-            for (var a = b+1; a < m/2; a++) {
-                console.log("x^"+m+" + x^"+a+" + x^"+b+" + x^"+c+" + 1 -> ", Circuit([m, a, b, c, 0]).computeDelay());
+function listAllDelays(startM, endM, delayFilter) {
+    for (var m = startM; m <= endM; m++) {
+        for (var c = 1; c < m-2; c++) {
+            for (var b = c+1; b < m-1; b++) {
+                for (var a = b+1; a < m/2; a++) {
+                    var delay = Circuit([m, a, b, c, 0]).computeDelay()
+                    if (!delayFilter || delayFilter(delay)) {
+                        console.log("x^"+m+" + x^"+a+" + x^"+b+" + x^"+c+" + 1 -> "+delay);
+                    }
+                }
             }
         }
     }
 }
-*/
+//x^14 + x^6 + x^5 + x^4 + 1 ->  5
+//x^15 + x^7 + x^5 + x^4 + 1 ->  5
+//x^15 + x^7 + x^6 + x^5 + 1 ->  5
 
 
         </script>
