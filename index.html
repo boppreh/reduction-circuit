@@ -72,12 +72,16 @@ function Circuit(f) {
         }
     }
 
-    function drawLines(xorsPerColumn) {
-        function drawXor(x, y) {
+    function drawLines(xorsPerColumn, highlightedXors) {
+        highlightedXors = highlightedXors || [];
+        console.log(highlightedXors);
+
+        function drawXor(x, y, highlight) {
             context.stroke();
             context.beginPath();
 
             context.save();
+            context.strokeStyle = highlight ? "#0000FF" : "#000000"
             context.lineWidth += 1;
             context.moveTo(x, y);
             context.arc(x, y, xorRadius, 0, Math.PI * 2);
@@ -111,7 +115,7 @@ function Circuit(f) {
                 if (xor.rightXor !== xor.leftXor) {
                     context.lineTo(x, y);
                     context.lineTo(x, heightY(xor.leftXor.height)+curveRadius);
-                    drawXor(x, y);
+                    drawXor(x, y, highlightedXors.indexOf(xor) > 0);
                     context.moveTo(x, y);
                     context.lineTo(x, y+curveRadius);
                 } else {
@@ -239,7 +243,7 @@ function Circuit(f) {
         xorPadding = xorRadius;
 
         drawNumbers();
-        drawLines(xorsPerColumn);
+        drawLines(xorsPerColumn, highlightedXors);
         drawDelays(xorsPerColumn);
         drawXorPath(computeCriticalPath(xorsPerColumn[highlightedColumn]));
 
