@@ -16,7 +16,7 @@
         }
         canvas {
             background-color: #EEE;
-            background-color: #456990;
+            background-color: #CCC;
         }
         </style>
     </head>
@@ -183,7 +183,7 @@ function Circuit(f) {
             context.lineTo(columnX(right.column), heightY(right.height));
             context.stroke();
             if (left !== right) {
-                context.strokeStyle = path.indexOf(xor) >= 0 ? "#502010" : "#0000FF";
+                context.strokeStyle = path.indexOf(xor) >= 0 ? "#802010" : "#0000FF";
                 drawXor(columnX(xor.column), heightY(xor.height));
                 context.strokeStyle = "#0000FF";
             }
@@ -232,7 +232,7 @@ function Circuit(f) {
         maxHeight = Math.max(maxHeight, xors[xors.length-1].height);
     }
     function redrawEverything(column) {
-        column = Math.max(0, Math.min(d, column));
+        //column = Math.max(0, Math.min(d, column));
 
         context.save();
 
@@ -246,7 +246,9 @@ function Circuit(f) {
         drawNumbers();
         drawLines(xorsPerColumn);
         drawDelays(xorsPerColumn);
-        drawXorPath(computeCriticalPath(xorsPerColumn[column]));
+        if (column >= 0 && column <= d) {
+            drawXorPath(computeCriticalPath(xorsPerColumn[column]));
+        }
 
         context.restore();
     }
@@ -298,6 +300,10 @@ window.addEventListener("mousemove", function(event) {
         lastColumnSelected = column;
         circuit.redrawEverything(lastColumnSelected);
     }
+});
+canvas.addEventListener("mouseout", function() {
+    lastColumnSelected = -1;
+    circuit.redrawEverything(lastColumnSelected);
 });
 
 //alert(Circuit([163,7,6,3,0]).computeDelay()); // 4
