@@ -72,16 +72,12 @@ function Circuit(f) {
         }
     }
 
-    function drawLines(xorsPerColumn, highlightedXors) {
-        highlightedXors = highlightedXors || [];
-        console.log(highlightedXors);
-
-        function drawXor(x, y, highlight) {
+    function drawLines(xorsPerColumn) {
+        function drawXor(x, y) {
             context.stroke();
             context.beginPath();
 
             context.save();
-            context.strokeStyle = highlight ? "#0000FF" : "#000000"
             context.lineWidth += 1;
             context.moveTo(x, y);
             context.arc(x, y, xorRadius, 0, Math.PI * 2);
@@ -115,7 +111,7 @@ function Circuit(f) {
                 if (xor.rightXor !== xor.leftXor) {
                     context.lineTo(x, y);
                     context.lineTo(x, heightY(xor.leftXor.height)+curveRadius);
-                    drawXor(x, y, highlightedXors.indexOf(xor) > 0);
+                    drawXor(x, y);
                     context.moveTo(x, y);
                     context.lineTo(x, y+curveRadius);
                 } else {
@@ -167,20 +163,6 @@ function Circuit(f) {
         return xorsPerColumn;
     }
 
-    function walkUp(xor) {
-        if (xor) {
-            return [xor].concat(walkUp(xor.leftXor)).concat(walkUp(xor.rightXor));
-        } else {
-            return [];
-        }
-    }
-
-    function relatedXors(column, xorsPerColumn) {
-        var columnXors = xorsPerColumn[column];
-        var lastXor = columnXors[columnXors.length-1];
-        return walkUp(lastXor);
-    }
-
     function computeCriticalPath(xors) {
         var xor = xors[xors.length-1];
         var criticalPath = [xor];
@@ -229,9 +211,8 @@ function Circuit(f) {
     }
 
     var xorsPerColumn = computeXorStructure(operationState);
-    function redrawEverything(highlightedColumn) {
-        highlightedColumn = Math.max(0, Math.min(d, highlightedColumn));
-        var highlightedXors = relatedXors(highlightedColumn, xorsPerColumn);
+    function redrawEverything(column) {
+        column = Math.max(0, Math.min(d, column));
 
         context.save();
 
@@ -243,9 +224,9 @@ function Circuit(f) {
         xorPadding = xorRadius;
 
         drawNumbers();
-        drawLines(xorsPerColumn, highlightedXors);
+        drawLines(xorsPerColumn);
         drawDelays(xorsPerColumn);
-        drawXorPath(computeCriticalPath(xorsPerColumn[highlightedColumn]));
+        drawXorPath(computeCriticalPath(xorsPerColumn[column]));
 
         context.restore();
     }
