@@ -311,16 +311,25 @@ canvas.addEventListener("mouseout", function() {
 //alert(Circuit([571,10,5,2,0]).computeDelay()); // 3
 function listAllDelays(startM, endM, delayFilter) {
     for (var m = startM; m <= endM; m++) {
-        for (var c = 1; c < m-2; c++) {
-            for (var b = c+1; b < m-1; b++) {
-                for (var a = b+1; a < m/2; a++) {
+        for (var a = 3; a < m/2; a++) {
+            for (var b = 2; b < a; b++) {
+                for (var c = 1; c < b; c++) {
                     var delay = Circuit([m, a, b, c, 0]).computeDelay()
-                    if (!delayFilter || delayFilter(delay)) {
+                    if (!delayFilter || delayFilter(delay) || delay !== guessDelay(a, b, c)) {
                         console.log("x^"+m+" + x^"+a+" + x^"+b+" + x^"+c+" + 1 -> "+delay);
                     }
                 }
             }
         }
+    }
+}
+function guessDelay(a, b, c) {
+    if (c > Math.ceil(a/2)) {
+        return 6;
+    } else if (c > Math.min(Math.ceil(b/2),a-b+1)) {
+        return 5;
+    } else {
+        return 4;
     }
 }
 //x^14 + x^6 + x^5 + x^4 + 1 ->  5
