@@ -33,7 +33,7 @@ context.save();
 
 var hash = window.location.hash;
 
-function Circuit(f) {
+function Circuit(f, optimizeForSquaring) {
     var r = f.slice(1);
     var m = f[0];
     var d = 2*m - 2;
@@ -43,7 +43,7 @@ function Circuit(f) {
         reductionState.push(1);
         squaringState.push(0);
     }
-    var operationState = squaringState;
+    var operationState = optimizeForSquaring ? squaringState : reductionState;
 
     var padding = 40;
     var startY = padding;
@@ -286,9 +286,16 @@ if (hash) {
 } else {
     f = [7, 6, 2, 1, 0];
 }
-var circuit = new Circuit(f);
+var optimize = false;
+var circuit = new Circuit(f, optimize);
 
 var lastColumnSelected = f[1];
+
+window.addEventListener("dblclick", function() {
+    optimize = !optimize;
+    circuit = new Circuit(f, optimize);
+    circuit.redrawEverything(lastColumnSelected);
+});
 
 circuit.redrawEverything(lastColumnSelected);
 window.addEventListener("resize", debounce(function() {
