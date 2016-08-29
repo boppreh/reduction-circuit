@@ -317,11 +317,11 @@ canvas.addEventListener("mouseout", function() {
 //alert(Circuit([283,12,7,5,0]).computeDelay()); // 4
 //alert(Circuit([571,10,5,2,0]).computeDelay()); // 3
 function listAllDelays(startM, endM, delayFilter) {
-    for (var m = startM; m <= endM; m++) {
+    for (var m = startM; m <= endM; m+=2) {
         for (var a = 3; a < m/2; a++) {
             for (var b = 2; b < a; b++) {
                 for (var c = 1; c < b; c++) {
-                    var delay = Circuit([m, a, b, c, 0]).computeDelay()
+                    var delay = Circuit([m, a, b, c, 0], optimize).computeDelay()
                     if (!delayFilter || delayFilter(delay) || delay !== guessDelay(a, b, c)) {
                         console.log("x^"+m+" + x^"+a+" + x^"+b+" + x^"+c+" + 1 -> "+delay);
                     }
