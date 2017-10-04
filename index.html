@@ -121,7 +121,7 @@ function Circuit(f, optimizeForSquaring) {
 
         for (var i = 0; i < xorsPerColumn.length; i++) {
             var xors = xorsPerColumn[i];
-            if (i % 2 == 0 || !optimize) {
+            if (!optimize || i % 2 === 0) {
                 context.moveTo(columnX(i), startY);
                 context.lineTo(columnX(i), heightY(0)+curveRadius);
             }
@@ -159,6 +159,11 @@ function Circuit(f, optimizeForSquaring) {
 
     function computeXorStructure(assignmentState) {
         assignmentState = assignmentState.slice(0); // clone array.
+        if (assignmentState[0]) {
+            console.log("1: C <- [c_0, c_1, c_2, ..., c_" + d + "]");
+        } else {
+            console.log("1: C <- [a_0, 0, a_1, 0, a_2, 0, ..., 0, a_" + (m-1) + "]");
+        }
 
         var xorsPerColumn = [];
         for (var i = 0; i <= d; i++) {
@@ -180,9 +185,11 @@ function Circuit(f, optimizeForSquaring) {
                 var lastRightDelay = lastRightXor.delay;
                 if (left%2 && assignmentState[left] == 0) {
                     xorsPerColumn[left].push({"height": height++, "column": left, "leftXor": lastRightXor, "rightXor": lastRightXor, "delay": lastRightDelay});
+                    console.log(height+1 + ": C[" + left + "] <- C[" + lastRightXor.column + "]");
                 } else {
                     var delay = Math.max(lastLeftDelay, lastRightDelay) + 1;
                     xorsPerColumn[left].push({"height": height++, "column": left, "leftXor": lastLeftXor, "rightXor": lastRightXor, "delay": delay});
+                    console.log(height+1 + ": C[" + left + "] <- C[" + lastLeftXor.column + "] xor C[" + lastRightXor.column + "]");
                 }
                 assignmentState[left] = 1;
             }
