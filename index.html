@@ -83,8 +83,8 @@ function Circuit(f, optimizeForSquaring) {
         context.beginPath();
 
         context.moveTo(columnWidth()*-0.5, 0);
-        context.lineTo(-xorRadius*0.2, -xorRadius*0.3);
-        context.lineTo(-xorRadius*0.2, xorRadius*0.2);
+        context.lineTo(-xorRadius, -xorRadius*0.3);
+        context.quadraticCurveTo(-xorRadius*0.2, -xorRadius*0.5, -xorRadius*0.2, xorRadius*0.2);
 
         context.moveTo(0, rowHeight()*-0.5);
         context.lineTo(xorRadius*.2, xorRadius*0.2);
