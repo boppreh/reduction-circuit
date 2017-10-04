@@ -51,7 +51,7 @@ function Circuit(f, optimizeForSquaring) {
     function rowHeight() {
         return xorPadding + 2 * xorRadius;
     }
-    var startY = rowHeight() * 2;
+    var startY = rowHeight() * 1;
 
     function heightY(height) {
         return startY + rowHeight() * (height + 1);
@@ -83,11 +83,11 @@ function Circuit(f, optimizeForSquaring) {
         context.beginPath();
 
         context.moveTo(columnWidth()*-0.5, 0);
-        context.lineTo(-xorRadius*0.36, -xorRadius*0.3);
-        context.lineTo(-xorRadius*0.36, xorRadius*0.2);
+        context.lineTo(-xorRadius*0.2, -xorRadius*0.3);
+        context.lineTo(-xorRadius*0.2, xorRadius*0.2);
 
         context.moveTo(0, rowHeight()*-0.5);
-        context.lineTo(xorRadius*.36, xorRadius*0.2);
+        context.lineTo(xorRadius*.2, xorRadius*0.2);
         context.stroke();
 
         context.beginPath();
@@ -164,14 +164,14 @@ function Circuit(f, optimizeForSquaring) {
         context.textAlign = "left";
         context.textBaseline = "middle";
         context.font = "26px mono";
-        for (var i = -1; i < maxHeight + 1; i++) {
+        for (var i = 0; i < maxHeight + 1; i++) {
             var y = heightY(i);
-            if (i % 2 == 0) {
-                context.fillStyle = "#CECECE";
+            if (i % 2) {
+                context.fillStyle = "#EEEEEE";
                 context.fillRect(0, y+rowHeight()/2, window.innerWidth, -rowHeight());
             }
             context.fillStyle = "#000000";
-            context.fillText(i+2+":", 10, y);
+            context.fillText(i+1+":", 10, y);
         }
 
         context.restore();
@@ -184,7 +184,7 @@ function Circuit(f, optimizeForSquaring) {
         for (var i = 0; i < xorsPerColumn.length; i++) {
             var xors = xorsPerColumn[i];
             if (!optimize || i % 2 === 0) {
-                context.moveTo(columnX(i), heightY(-1));
+                context.moveTo(columnX(i), heightY(-0.5));
                 context.lineTo(columnX(i), heightY(0.5));
             }
             var xor = xors[0];
@@ -194,7 +194,7 @@ function Circuit(f, optimizeForSquaring) {
                 var y = heightY(xor.height);
 
                 var rightX = columnX(xor.rightXor.column);
-                context.moveTo(rightX, heightY(xor.rightXor.height)+curveRadius);
+                context.moveTo(rightX, heightY(xor.rightXor.height+0.5));
                 context.lineTo(rightX, y-curveRadius);
                 context.quadraticCurveTo(rightX, y, rightX+curveRadius, y);
                 context.lineTo(columnX(xor.column+0.5), y);
@@ -231,7 +231,7 @@ function Circuit(f, optimizeForSquaring) {
         for (var i = 0; i <= d; i++) {
             xorsPerColumn[i] = [{"height": 0, "column": i, "delay": 0}];
         }
-        var height = 0;
+        var height = 1;
         for (var i = d; i >= m; i--) {
             var right = i;
             if (right%2 && assignmentState[right] == 0) {
@@ -247,11 +247,11 @@ function Circuit(f, optimizeForSquaring) {
                 var lastRightDelay = lastRightXor.delay;
                 if (left%2 && assignmentState[left] == 0) {
                     xorsPerColumn[left].push({"height": height++, "column": left, "leftXor": lastRightXor, "rightXor": lastRightXor, "delay": lastRightDelay});
-                    console.log(height+1 + ": C[" + left + "] <- C[" + lastRightXor.column + "]");
+                    console.log(height + ": C[" + left + "] <- C[" + lastRightXor.column + "]");
                 } else {
                     var delay = Math.max(lastLeftDelay, lastRightDelay) + 1;
                     xorsPerColumn[left].push({"height": height++, "column": left, "leftXor": lastLeftXor, "rightXor": lastRightXor, "delay": delay});
-                    console.log(height+1 + ": C[" + left + "] <- C[" + lastLeftXor.column + "] xor C[" + lastRightXor.column + "]");
+                    console.log(height + ": C[" + left + "] <- C[" + lastLeftXor.column + "] xor C[" + lastRightXor.column + "]");
                 }
                 assignmentState[left] = 1;
             }
