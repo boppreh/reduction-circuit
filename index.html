@@ -45,13 +45,16 @@ function Circuit(f, optimizeForSquaring) {
     var operationState = optimizeForSquaring ? squaringState : reductionState;
 
     var padding = 40;
-    var startY = padding;
+    var startY = padding * 1.3;
     var xorRadius = 10;
     var xorPadding = 10;
     var curveRadius = 8;
+    function rowHeight() {
+        return xorPadding + 2 * xorRadius;
+    }
 
     function heightY(height) {
-        return startY + (xorPadding + 2 * xorRadius) * (height + 1);
+        return startY + rowHeight() * (height + 1);
     }
     function columnWidth() {
         return Math.ceil((canvas.width - 2 * padding) / d);
@@ -64,6 +67,7 @@ function Circuit(f, optimizeForSquaring) {
     }
 
     function drawNumbers() {
+        context.textBaseline = "alphabetic";
         context.textAlign = "center";
         context.font = "26px mono";
         for (var i = 0; i <= d; i++) {
@@ -84,19 +88,49 @@ function Circuit(f, optimizeForSquaring) {
         context.lineWidth -= 1;
     }
 
+    function drawRows(xorsPerColumn) {
+        context.save();
+
+        var maxHeight = 0;
+        for (var i = 0; i < xorsPerColumn.length; i++) {
+            var xors = xorsPerColumn[i];
+            for (var j = 1; j < xors.length; j++) {
+                maxHeight = Math.max(maxHeight, xors[j].height);
+            }
+        }
+
+        context.textAlign = "left";
+        context.textBaseline = "middle";
+        context.font = "26px mono";
+        for (var i = -1; i < maxHeight + 1; i++) {
+            var y = heightY(i);
+            if (i % 2 == 0) {
+                context.fillStyle = "#CECECE";
+                context.fillRect(0, y+rowHeight()/2, window.innerWidth, -rowHeight());
+            }
+            context.fillStyle = "#000000";
+            context.fillText(i+2+":", 10, y);
+        }
+
+        context.restore();
+    }
+
     function drawLines(xorsPerColumn) {
 
         context.beginPath();
 
         for (var i = 0; i < xorsPerColumn.length; i++) {
             var xors = xorsPerColumn[i];
-            context.moveTo(columnX(i), startY);
-            context.lineTo(columnX(i), heightY(0)+curveRadius);
+            if (i % 2 == 0 || !optimize) {
+                context.moveTo(columnX(i), startY);
+                context.lineTo(columnX(i), heightY(0)+curveRadius);
+            }
             var xor = xors[0];
             for (var j = 1; j < xors.length; j++) {
                 xor = xors[j];
                 var x = columnX(xor.column);
                 var y = heightY(xor.height);
+
                 var rightX = columnX(xor.rightXor.column);
                 context.moveTo(rightX, heightY(xor.rightXor.height));
                 context.lineTo(rightX, y-curveRadius);
@@ -116,11 +150,7 @@ function Circuit(f, optimizeForSquaring) {
                 }
             }
             if (i < m) {
-                if (xor.height) {
-                    context.moveTo(columnX(i), heightY(xor.height)+curveRadius);
-                } else {
-                    context.moveTo(columnX(i), heightY(0)+curveRadius);
-                }
+                context.moveTo(columnX(i), heightY(xor.height)+curveRadius);
                 context.lineTo(columnX(i), canvas.height);
             }
         }
@@ -242,6 +272,7 @@ function Circuit(f, optimizeForSquaring) {
         xorRadius = Math.ceil((canvas.height - 2 * padding + 18) / (4*maxHeight));
         xorPadding = xorRadius;
 
+        drawRows(xorsPerColumn);
         drawNumbers();
         drawLines(xorsPerColumn);
         drawDelays(xorsPerColumn);
