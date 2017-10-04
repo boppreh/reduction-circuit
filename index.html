@@ -54,7 +54,7 @@ function Circuit(f, optimizeForSquaring) {
     }
 
     function heightY(height) {
-        return startY + rowHeight() * (height + 1);
+        return startY + rowHeight() * (height + 2);
     }
     function columnWidth() {
         return Math.ceil((canvas.width - 2 * padding) / d);
@@ -150,7 +150,7 @@ function Circuit(f, optimizeForSquaring) {
             var xors = xorsPerColumn[i];
             if (!optimize || i % 2 === 0) {
                 context.moveTo(columnX(i), startY);
-                context.lineTo(columnX(i), heightY(0)+curveRadius);
+                context.lineTo(columnX(i), heightY(0.5));
             }
             var xor = xors[0];
             for (var j = 1; j < xors.length; j++) {
