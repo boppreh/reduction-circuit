@@ -98,7 +98,7 @@ function Circuit(f, optimizeForSquaring) {
         context.lineTo(width, curveHeight);
         context.quadraticCurveTo(width*0.8, bottomHeight*0.9, 0, bottomHeight);
 
-        context.lineTo(0, y);
+        context.lineTo(0, rowHeight());
 
         context.moveTo(0, rowHeight()*-0.5);
         context.lineTo(0, rowHeight()*-0.4);
@@ -166,12 +166,10 @@ function Circuit(f, optimizeForSquaring) {
 
                 if (xor.rightXor !== xor.leftXor) {
                     context.moveTo(x, heightY(xor.height-0.5));
-                    context.lineTo(x, heightY(xor.leftXor.height)+curveRadius);
+                    context.lineTo(x, heightY(xor.leftXor.height+0.5));
                     context.stroke();
                     drawXor(x, y);
                     context.beginPath();
-                    //context.moveTo(x, y);
-                    //context.lineTo(x, y+curveRadius);
                 } else {
                     context.lineTo(x-curveRadius, y);
                     context.quadraticCurveTo(x, y, x, y+curveRadius);
