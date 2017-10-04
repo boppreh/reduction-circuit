@@ -74,18 +74,45 @@ function Circuit(f, optimizeForSquaring) {
             context.fillText(i, columnX(i), padding * 3/4, columnWidth());
         }
     }
+    var TAU = Math.PI * 2;
 
     function drawXor(x, y) {
         context.beginPath();
-        context.lineWidth += 1;
-        context.moveTo(x, y);
-        context.arc(x, y, xorRadius, 0, Math.PI * 2);
-        context.moveTo(x-xorRadius, y);
-        context.lineTo(x+xorRadius, y);
-        context.moveTo(x, y-xorRadius);
-        context.lineTo(x, y+xorRadius);
+        context.save();
+        context.translate(x, y);
+        context.arc(0, -1.2*xorRadius, xorRadius, TAU*0.18, TAU/2-TAU*0.18);
         context.stroke();
-        context.lineWidth -= 1;
+        context.beginPath();
+        context.arc(0, -xorRadius, xorRadius, TAU*0.18, TAU/2-TAU*0.18);
+
+        var width = Math.cos(TAU*0.18) * xorRadius;
+        var topHeight = -(1-Math.sin(TAU*0.18)) * xorRadius;
+        var curveHeight = topHeight + xorRadius/2;
+        var bottomHeight = curveHeight + xorRadius/2;
+
+        context.moveTo(-width, topHeight);
+        context.lineTo(-width, curveHeight);
+        context.quadraticCurveTo(-width*0.8, bottomHeight*0.9, 0, bottomHeight);
+
+        context.moveTo(width, topHeight);
+        context.lineTo(width, curveHeight);
+        context.quadraticCurveTo(width*0.8, bottomHeight*0.9, 0, bottomHeight);
+
+        context.lineTo(0, y);
+
+        context.moveTo(0, rowHeight()*-0.5);
+        context.lineTo(0, rowHeight()*-0.4);
+        context.lineTo(xorRadius*0.2, -rowHeight()*0.4);
+        context.lineTo(xorRadius*0.2, topHeight);
+
+        context.moveTo(columnWidth()*-0.5, 0);
+        context.lineTo(columnWidth()*-0.5, -xorRadius);
+        context.lineTo(-xorRadius, -xorRadius);
+        context.lineTo(-xorRadius*0.2, -xorRadius);
+        context.lineTo(-xorRadius*0.2, topHeight);
+
+        context.stroke();
+        context.restore();
     }
 
     function drawRows(xorsPerColumn) {
@@ -132,25 +159,27 @@ function Circuit(f, optimizeForSquaring) {
                 var y = heightY(xor.height);
 
                 var rightX = columnX(xor.rightXor.column);
-                context.moveTo(rightX, heightY(xor.rightXor.height));
+                context.moveTo(rightX, heightY(xor.rightXor.height)+curveRadius);
                 context.lineTo(rightX, y-curveRadius);
                 context.quadraticCurveTo(rightX, y, rightX+curveRadius, y);
-                context.lineTo(x-curveRadius, y);
+                context.lineTo(columnX(xor.column+0.5), y);
 
                 if (xor.rightXor !== xor.leftXor) {
-                    context.lineTo(x, y);
+                    context.moveTo(x, heightY(xor.height-0.5));
                     context.lineTo(x, heightY(xor.leftXor.height)+curveRadius);
                     context.stroke();
                     drawXor(x, y);
                     context.beginPath();
-                    context.moveTo(x, y);
-                    context.lineTo(x, y+curveRadius);
+                    //context.moveTo(x, y);
+                    //context.lineTo(x, y+curveRadius);
                 } else {
+                    context.lineTo(x-curveRadius, y);
                     context.quadraticCurveTo(x, y, x, y+curveRadius);
+                    context.lineTo(x, heightY(xor.height+0.5));
                 }
             }
             if (i < m) {
-                context.moveTo(columnX(i), heightY(xor.height)+curveRadius);
+                context.moveTo(columnX(i), heightY(xor.height+0.5));
                 context.lineTo(columnX(i), canvas.height);
             }
         }
