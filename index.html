@@ -71,7 +71,7 @@ function Circuit(f, optimizeForSquaring) {
         context.textAlign = "center";
         context.font = "26px mono";
         for (var i = 0; i <= d; i++) {
-            context.fillText(i, columnX(i), padding * 3/4, columnWidth());
+            context.fillText('C['+i+']', columnX(i), padding * 3/4, columnWidth());
         }
     }
     var TAU = Math.PI * 2;
@@ -311,14 +311,14 @@ function Circuit(f, optimizeForSquaring) {
 
     function drawDelays(xorsPerColumn) {
         context.save();
-        context.textAlign = "left";
-        context.font = "18px mono";
+        context.textAlign = "right";
+        context.font = "26px mono";
         context.fillStyle = "#502010";
-        for (var i = 0; i <= d; i++) {
+        for (var i = 0; i < m; i++) {
             var xors = xorsPerColumn[i];
             var last = xors[xors.length - 1];
             var delay = last ? last.delay : 0;
-            context.fillText(delay, columnX(i)+5, canvas.height - padding + 18);
+            context.fillText(delay+"Tx", columnX(i)-5, canvas.height - padding + 18);
         }
         context.restore();
     }
@@ -338,7 +338,7 @@ function Circuit(f, optimizeForSquaring) {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        xorRadius = Math.ceil((canvas.height - 2 * padding + 18) / (4*maxHeight));
+        xorRadius = Math.ceil((canvas.height - 2 * padding) / (4*maxHeight));
         xorPadding = xorRadius;
 
         drawRows(xorsPerColumn);
